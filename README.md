@@ -1,0 +1,1 @@
+# kumamoto-trip-plan
