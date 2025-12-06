@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熊本子連れ旅行スポットマップ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+
+        #info {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .spot-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .spot-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .spot-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .spot-card h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        .spot-card .category {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .spot-card .address {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .leaflet-popup-content {
+            min-width: 200px;
+        }
+
+        .popup-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .popup-category {
+            background-color: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .popup-info {
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .popup-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .popup-link:hover {
+            text-decoration: underline;
+        }
+
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .legend h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>熊本子連れ旅行スポットマップ</h1>
+        <p>マーカーをクリックすると詳細情報が表示されます</p>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="info">
+        <div class="legend">
+            <h3>マーカーの色</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>テーマパーク・遊園地</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #27ae60;"></div>
+                <span>動物園・自然体験</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f39c12;"></div>
+                <span>公園・遊具施設</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>アウトドア・アクティビティ</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>歴史・文化施設</span>
+            </div>
+        </div>
+
+        <h2 style="color: #2c3e50; margin-bottom: 15px;">観光スポット一覧</h2>
+        <div class="spot-list" id="spotList"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // マップの初期化（熊本県の中心付近）
+        const map = L.map('map').setView([32.8, 130.7], 10);
+
+        // タイルレイヤーの追加
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // カスタムアイコンの作成関数
+        function createIcon(color) {
+            return L.divIcon({
+                className: 'custom-div-icon',
+                html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            });
+        }
+
+        // 観光スポットデータ
+        const spots = [
+            {
+                name: 'グリーンランド',
+                category: 'テーマパーク・遊園地',
+                lat: 32.9864,
+                lng: 130.4347,
+                address: '熊本県荒尾市緑ケ丘',
+                description: '西日本最大級の遊園地。約70種類以上のアトラクションがあります。',
+                url: 'https://www.greenland.co.jp/park',
+                color: '#e74c3c'
+            },
+            {
+                name: '阿蘇ファームランド',
+                category: 'テーマパーク・遊園地',
+                lat: 32.8494,
+                lng: 131.0536,
+                address: '熊本県阿蘇郡南阿蘇村河陽5579-3',
+                description: '健康をテーマにした体験型テーマパーク。入園無料で動物とのふれあいも楽しめます。',
+                url: 'https://asofarmland.co.jp/',
+                color: '#e74c3c'
+            },
+            {
+                name: '熊本市動植物園',
+                category: '動物園・自然体験',
+                lat: 32.7527,
+                lng: 130.7614,
+                address: '熊本県熊本市東区健軍5-14-2',
+                description: '約120種700頭の動物と800種50,000点の植物。キンシコウを日本で唯一見られます。',
+                url: 'https://www.ezooko.jp/',
+                color: '#27ae60'
+            },
+            {
+                name: 'ひごっこジャングル（坪井川緑地）',
+                category: '公園・遊具施設',
+                lat: 32.8278,
+                lng: 130.6833,
+                address: '熊本県熊本市北区清水町坪井川緑地内',
+                description: '熊本市内最大級の大型複合遊具施設。150種類以上の遊具があり、無料で楽しめます。',
+                url: 'https://www.city.kumamoto.jp/kiji00332062/',
+                color: '#f39c12'
+            },
+            {
+                name: '阿蘇ネイチャーランド',
+                category: 'アウトドア・アクティビティ',
+                lat: 32.8856,
+                lng: 131.1097,
+                address: '熊本県阿蘇市内牧1092-1',
+                description: 'パラグライダー、熱気球、マウンテンボードなどのアウトドア体験ができます。',
+                url: 'https://asonatureland.com/',
+                color: '#3498db'
+            },
+            {
+                name: '熊本城',
+                category: '歴史・文化施設',
+                lat: 32.8064,
+                lng: 130.7056,
+                address: '熊本県熊本市中央区本丸1-1',
+                description: '日本三名城の一つ。ベビーカーでの入園も可能です。',
+                url: 'https://castle.kumamoto-guide.jp/',
+                color: '#9b59b6'
+            }
+        ];
+
+        // マーカーとカードの追加
+        const spotListDiv = document.getElementById('spotList');
+
+        spots.forEach((spot, index) => {
+            // マーカーの追加
+            const marker = L.marker([spot.lat, spot.lng], {
+                icon: createIcon(spot.color)
+            }).addTo(map);
+
+            // ポップアップの内容
+            const popupContent = `
+                <div class="popup-title">${spot.name}</div>
+                <div class="popup-category">${spot.category}</div>
+                <div class="popup-info">
+                    <div style="margin: 5px 0;">${spot.description}</div>
+                    <div style="color: #7f8c8d; font-size: 12px; margin-top: 8px;">📍 ${spot.address}</div>
+                    <a href="${spot.url}" target="_blank" class="popup-link">公式サイトを見る →</a>
+                </div>
+            `;
+
+            marker.bindPopup(popupContent);
+
+            // スポットカードの作成
+            const card = document.createElement('div');
+            card.className = 'spot-card';
+            card.innerHTML = `
+                <div class="category" style="background-color: ${spot.color};">${spot.category}</div>
+                <h3>${spot.name}</h3>
+                <p style="font-size: 14px; margin: 10px 0;">${spot.description}</p>
+                <div class="address">📍 ${spot.address}</div>
+            `;
+
+            // カードクリックでマーカーを開く
+            card.addEventListener('click', () => {
+                map.setView([spot.lat, spot.lng], 14);
+                marker.openPopup();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            spotListDiv.appendChild(card);
+        });
+
+        // すべてのマーカーが見える範囲に調整
+        const group = L.featureGroup(spots.map(spot =>
+            L.marker([spot.lat, spot.lng])
+        ));
+        map.fitBounds(group.getBounds().pad(0.1));
+    </script>
+</body>
+</html>
