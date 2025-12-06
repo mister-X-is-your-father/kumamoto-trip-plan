@@ -416,12 +416,11 @@
         開発中はAPIキーなしでも一部機能が動作しますが、
         「開発目的のみ」の透かしが表示されます。
     -->
+    <!-- APIキーあり版（APIキーを取得した場合はこちらを使用）
     <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMap&language=ja" async defer></script>
-
-    <!-- APIキーなしで動作させる場合（開発・テスト用のみ）
-         上記のscriptタグをコメントアウトし、下記のコメントを外してください
-         ※本番環境では必ずAPIキーを設定してください
-    <script src="https://maps.googleapis.com/maps/api/js?callback=initMap&language=ja" async defer></script>
     -->
+
+    <!-- APIキーなし版（開発・テスト用） -->
+    <script src="https://maps.googleapis.com/maps/api/js?callback=initMap&language=ja" async defer></script>
 </body>
 </html>
