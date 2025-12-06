@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>熊本子連れ旅行スポットマップ</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body {
             margin: 0;
@@ -22,6 +21,19 @@
         #header h1 {
             margin: 0;
             font-size: 24px;
+        }
+
+        #api-notice {
+            background-color: #f39c12;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        #api-notice a {
+            color: white;
+            text-decoration: underline;
         }
 
         #map {
@@ -77,44 +89,6 @@
             margin: 5px 0;
         }
 
-        .leaflet-popup-content {
-            min-width: 200px;
-        }
-
-        .popup-title {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-
-        .popup-category {
-            background-color: #3498db;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
-        .popup-info {
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .popup-link {
-            display: inline-block;
-            margin-top: 8px;
-            color: #3498db;
-            text-decoration: none;
-            font-size: 13px;
-        }
-
-        .popup-link:hover {
-            text-decoration: underline;
-        }
-
         .legend {
             background: white;
             padding: 15px;
@@ -141,12 +115,66 @@
             margin-right: 10px;
             border: 2px solid #333;
         }
+
+        .gm-style-iw {
+            max-width: 300px;
+        }
+
+        .info-window {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .info-window-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .info-window-category {
+            background-color: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .info-window-description {
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 8px 0;
+        }
+
+        .info-window-address {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin: 8px 0;
+        }
+
+        .info-window-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .info-window-link:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div id="header">
         <h1>熊本子連れ旅行スポットマップ</h1>
-        <p>マーカーをクリックすると詳細情報が表示されます</p>
+        <p>マーカーをクリックすると詳細情報が表示されます（Google Maps版）</p>
+    </div>
+
+    <!-- APIキー設定の注意書き -->
+    <div id="api-notice" style="display: none;">
+        ⚠️ Google Maps APIキーを設定してください。<a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank">APIキーの取得方法</a>
     </div>
 
     <div id="map"></div>
@@ -180,25 +208,22 @@
         <div class="spot-list" id="spotList"></div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Google Maps JavaScript API -->
+    <!--
+        APIキーの設定方法：
+        1. Google Cloud Consoleでプロジェクトを作成
+        2. Maps JavaScript APIを有効化
+        3. APIキーを作成
+        4. 下記のYOUR_API_KEY_HEREを実際のAPIキーに置き換え
+
+        APIキーがない場合でも開発目的で一時的に動作しますが、
+        本番環境では必ずAPIキーを設定してください。
+    -->
     <script>
-        // マップの初期化（熊本県の中心付近）
-        const map = L.map('map').setView([32.8, 130.7], 10);
-
-        // タイルレイヤーの追加
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-
-        // カスタムアイコンの作成関数
-        function createIcon(color) {
-            return L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            });
-        }
+        // Google Maps初期化前のグローバル変数
+        let map;
+        let markers = [];
+        let infoWindows = [];
 
         // 観光スポットデータ
         const spots = [
@@ -264,53 +289,139 @@
             }
         ];
 
-        // マーカーとカードの追加
-        const spotListDiv = document.getElementById('spotList');
-
-        spots.forEach((spot, index) => {
-            // マーカーの追加
-            const marker = L.marker([spot.lat, spot.lng], {
-                icon: createIcon(spot.color)
-            }).addTo(map);
-
-            // ポップアップの内容
-            const popupContent = `
-                <div class="popup-title">${spot.name}</div>
-                <div class="popup-category">${spot.category}</div>
-                <div class="popup-info">
-                    <div style="margin: 5px 0;">${spot.description}</div>
-                    <div style="color: #7f8c8d; font-size: 12px; margin-top: 8px;">📍 ${spot.address}</div>
-                    <a href="${spot.url}" target="_blank" class="popup-link">公式サイトを見る →</a>
-                </div>
-            `;
-
-            marker.bindPopup(popupContent);
-
-            // スポットカードの作成
-            const card = document.createElement('div');
-            card.className = 'spot-card';
-            card.innerHTML = `
-                <div class="category" style="background-color: ${spot.color};">${spot.category}</div>
-                <h3>${spot.name}</h3>
-                <p style="font-size: 14px; margin: 10px 0;">${spot.description}</p>
-                <div class="address">📍 ${spot.address}</div>
-            `;
-
-            // カードクリックでマーカーを開く
-            card.addEventListener('click', () => {
-                map.setView([spot.lat, spot.lng], 14);
-                marker.openPopup();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Google Maps初期化関数
+        function initMap() {
+            // マップの作成（熊本県の中心付近）
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 32.8, lng: 130.7 },
+                zoom: 10,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true
             });
 
-            spotListDiv.appendChild(card);
-        });
+            // 境界を計算するためのLatLngBounds
+            const bounds = new google.maps.LatLngBounds();
 
-        // すべてのマーカーが見える範囲に調整
-        const group = L.featureGroup(spots.map(spot =>
-            L.marker([spot.lat, spot.lng])
-        ));
-        map.fitBounds(group.getBounds().pad(0.1));
+            // 各スポットにマーカーを追加
+            spots.forEach((spot, index) => {
+                const position = { lat: spot.lat, lng: spot.lng };
+
+                // カスタムマーカーアイコン（SVG）
+                const markerIcon = {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: spot.color,
+                    fillOpacity: 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 3,
+                    scale: 12
+                };
+
+                // マーカーの作成
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: spot.name,
+                    icon: markerIcon,
+                    animation: google.maps.Animation.DROP
+                });
+
+                // 情報ウィンドウの内容
+                const infoWindowContent = `
+                    <div class="info-window">
+                        <div class="info-window-title">${spot.name}</div>
+                        <div class="info-window-category" style="background-color: ${spot.color};">${spot.category}</div>
+                        <div class="info-window-description">${spot.description}</div>
+                        <div class="info-window-address">📍 ${spot.address}</div>
+                        <a href="${spot.url}" target="_blank" class="info-window-link">公式サイトを見る →</a>
+                    </div>
+                `;
+
+                // 情報ウィンドウの作成
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoWindowContent
+                });
+
+                // マーカークリックイベント
+                marker.addListener('click', () => {
+                    // 他の情報ウィンドウを閉じる
+                    infoWindows.forEach(iw => iw.close());
+                    // この情報ウィンドウを開く
+                    infoWindow.open(map, marker);
+                });
+
+                markers.push(marker);
+                infoWindows.push(infoWindow);
+                bounds.extend(position);
+            });
+
+            // すべてのマーカーが表示されるようにマップを調整
+            map.fitBounds(bounds);
+
+            // スポットカードの作成
+            createSpotCards();
+        }
+
+        // スポットカードを作成する関数
+        function createSpotCards() {
+            const spotListDiv = document.getElementById('spotList');
+
+            spots.forEach((spot, index) => {
+                const card = document.createElement('div');
+                card.className = 'spot-card';
+                card.innerHTML = `
+                    <div class="category" style="background-color: ${spot.color};">${spot.category}</div>
+                    <h3>${spot.name}</h3>
+                    <p style="font-size: 14px; margin: 10px 0;">${spot.description}</p>
+                    <div class="address">📍 ${spot.address}</div>
+                `;
+
+                // カードクリックでマーカーに移動
+                card.addEventListener('click', () => {
+                    const position = { lat: spot.lat, lng: spot.lng };
+                    map.setCenter(position);
+                    map.setZoom(14);
+
+                    // 対応するマーカーの情報ウィンドウを開く
+                    infoWindows.forEach(iw => iw.close());
+                    infoWindows[index].open(map, markers[index]);
+
+                    // ページ上部にスクロール
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                spotListDiv.appendChild(card);
+            });
+        }
+
+        // エラーハンドリング
+        window.gm_authFailure = function() {
+            document.getElementById('api-notice').style.display = 'block';
+            console.error('Google Maps APIキーが無効です。APIキーを確認してください。');
+        };
     </script>
+
+    <!--
+        Google Maps API読み込み
+
+        【重要】下記のYOUR_API_KEY_HEREを実際のAPIキーに置き換えてください
+
+        APIキーの取得方法：
+        1. https://console.cloud.google.com/ にアクセス
+        2. プロジェクトを作成または選択
+        3. 「APIとサービス」→「ライブラリ」から「Maps JavaScript API」を有効化
+        4. 「APIとサービス」→「認証情報」からAPIキーを作成
+        5. 作成したAPIキーを下記のYOUR_API_KEY_HEREと置き換え
+
+        開発中はAPIキーなしでも一部機能が動作しますが、
+        「開発目的のみ」の透かしが表示されます。
+    -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMap&language=ja" async defer></script>
+
+    <!-- APIキーなしで動作させる場合（開発・テスト用のみ）
+         上記のscriptタグをコメントアウトし、下記のコメントを外してください
+         ※本番環境では必ずAPIキーを設定してください
+    <script src="https://maps.googleapis.com/maps/api/js?callback=initMap&language=ja" async defer></script>
+    -->
 </body>
 </html>
