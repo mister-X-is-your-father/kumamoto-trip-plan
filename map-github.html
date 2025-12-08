@@ -270,6 +270,28 @@
         .gm-err-autocomplete {
             display: none !important;
         }
+
+        /* ダイアログとモーダルを非表示 */
+        .gm-style-iw + div {
+            display: none !important;
+        }
+
+        div[role="dialog"] {
+            display: none !important;
+        }
+
+        .dismissButton {
+            display: none !important;
+        }
+
+        /* APIエラー関連のすべての要素を非表示 */
+        [class*="gm-err"] {
+            display: none !important;
+        }
+
+        [class*="gmnoprint"][style*="rgb(0, 0, 0)"] {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -351,7 +373,8 @@
             owner: 'mister-X-is-your-father',  // GitHubユーザー名
             repo: 'kumamoto-trip-plan',        // リポジトリ名
             ratingsIssueNumber: 1,             // レーティング用Issue番号
-            exclusionsIssueNumber: 2           // 除外設定用Issue番号
+            exclusionsIssueNumber: 2,          // 除外設定用Issue番号
+            token: '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'  // Personal Access Token
         };
 
         let map;
@@ -448,6 +471,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${GITHUB_CONFIG.token}`
                     },
                     body: JSON.stringify({ body })
                 });
@@ -470,6 +494,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${GITHUB_CONFIG.token}`
                     },
                     body: JSON.stringify({ body })
                 });
@@ -766,7 +791,45 @@
         // エラーハンドリング
         window.gm_authFailure = function() {
             console.error('Google Maps APIキーが無効です。');
+            removeGoogleMapsErrors();
         };
+
+        // Google Mapsのエラーダイアログを削除する関数
+        function removeGoogleMapsErrors() {
+            // OKボタンを探して自動的にクリック
+            const okButtons = document.querySelectorAll('button[aria-label="OK"], button.dismissButton, [role="dialog"] button');
+            okButtons.forEach(button => {
+                if (button.textContent.includes('OK') || button.textContent.includes('閉じる')) {
+                    button.click();
+                }
+            });
+
+            // エラー関連の要素を全て削除
+            const errorSelectors = [
+                '.gm-err-container',
+                '.gm-err-content',
+                '.gm-err-message',
+                '.gm-err-autocomplete',
+                '[role="dialog"]',
+                '.dismissButton'
+            ];
+
+            errorSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.remove();
+                });
+            });
+        }
+
+        // 定期的にエラーダイアログをチェックして削除
+        setInterval(removeGoogleMapsErrors, 100);
+
+        // DOMが変更されたときにエラーダイアログを削除
+        const observer = new MutationObserver(removeGoogleMapsErrors);
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     </script>
 
     <!-- Google Maps API読み込み -->
