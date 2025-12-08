@@ -4,7 +4,7 @@
 
 ## 📁 ファイル構成
 
-- **熊本子連れ旅行プラン.md** - 全23箇所の観光スポット詳細情報（写真付き）
+- **熊本子連れ旅行プラン.md** - 全26箇所の観光スポット詳細情報（写真付き）
 - **map-github.html** - インタラクティブマップ（GitHub Issues DB版）
 
 ---
@@ -64,7 +64,7 @@
 **マップURL:**
 https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
 
-マップ上部の「📸 スポット一覧・写真・詳細情報を見る」ボタンから、全23スポットの写真と詳細情報が確認できます。
+マップ上部の「📸 スポット一覧・写真・詳細情報を見る」ボタンから、全26スポットの写真と詳細情報が確認できます。
 
 ---
 
@@ -78,7 +78,7 @@ https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
 5. 阿蘇ネイチャーランド（アウトドア）
 6. 熊本城
 
-### その他のおすすめスポット（17箇所）
+### その他のおすすめスポット（20箇所）
 7. ONE PIECE 麦わらの一味像めぐり
 8. 黒川温泉 湯あかり
 9. 高森田楽保存会
@@ -96,6 +96,9 @@ https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
 21. 釜田醸造所
 22. 黒川温泉
 23. JR熊本駅（アミュプラザくまもと）
+24. 別府地獄めぐり（大分）
+25. 黒川温泉 いこい旅館
+26. 黒川温泉 山の宿 新明館
 
 ---
 
