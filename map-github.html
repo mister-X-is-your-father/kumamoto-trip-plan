@@ -557,7 +557,10 @@
 
         // コメントを取得
         function getComment(spotName, user) {
-            return ratingsCache[spotName]?.[user]?['comment'] || '';
+            if (ratingsCache[spotName] && ratingsCache[spotName][user]) {
+                return ratingsCache[spotName][user]['comment'] || '';
+            }
+            return '';
         }
 
         // 除外設定を切り替え
