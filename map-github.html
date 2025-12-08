@@ -473,16 +473,23 @@
         }
 
         // Google Maps初期化関数
-        async function initMap() {
-            // GitHubからデータを読み込み
-            try {
-                await loadRatingsFromGitHub();
-                await loadExclusionsFromGitHub();
-            } catch (error) {
-                console.error('初期データ読み込みエラー:', error);
-                updateGitHubStatus('初期化エラー ✗');
-            }
+        function initMap() {
+            // GitHubからデータを読み込んでから地図を初期化
+            (async () => {
+                try {
+                    await loadRatingsFromGitHub();
+                    await loadExclusionsFromGitHub();
+                } catch (error) {
+                    console.error('初期データ読み込みエラー:', error);
+                    updateGitHubStatus('初期化エラー ✗');
+                }
 
+                initializeMap();
+            })();
+        }
+
+        // 地図を初期化
+        function initializeMap() {
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: 32.8, lng: 130.7 },
                 zoom: 10,
