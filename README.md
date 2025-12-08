@@ -4,82 +4,14 @@
 
 ## 📁 ファイル構成
 
-### メインコンテンツ
-- **熊本子連れ旅行プラン.md** - 全23箇所の観光スポット詳細情報
-- **map.html** - インタラクティブマップ（LocalStorage版）
-- **map-firebase.html** - インタラクティブマップ（Firebase版）✨推奨
-- **map-github.html** - インタラクティブマップ（GitHub Issues DB版）🆕
-
-### セットアップガイド
-- **FIREBASE_SETUP.md** - Firebase初期設定の詳細手順
+- **熊本子連れ旅行プラン.md** - 全23箇所の観光スポット詳細情報（写真付き）
+- **map-github.html** - インタラクティブマップ（GitHub Issues DB版）
 
 ---
 
 ## 🗺️ マップの使い方
 
-### オプション1: LocalStorage版（map.html）
-
-**特徴:**
-- ブラウザのLocalStorageでデータ保存
-- サーバー不要、すぐ使える
-- ⚠️ PC間でデータ共有不可
-
-**使い方:**
-1. map.htmlをブラウザで開く
-2. レーティングを入力
-3. データはそのブラウザにのみ保存される
-
----
-
-### オプション2: Firebase版（map-firebase.html）✨推奨
-
-**特徴:**
-- ✅ リアルタイム同期
-- ✅ PC・デバイス間でデータ共有
-- ✅ 松下さん・森田さんが同時にアクセス可能
-- ✅ データが自動的に同期される
-
-**セットアップ手順:**
-
-#### ステップ1: Firebaseプロジェクト作成
-`FIREBASE_SETUP.md` の手順に従ってFirebaseプロジェクトを作成してください（5分程度）
-
-#### ステップ2: 設定情報の取得
-Firebaseコンソールから以下のような設定情報をコピー：
-
-```javascript
-const firebaseConfig = {
-  apiKey: "AIza...",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
-};
-```
-
-#### ステップ3: map-firebase.htmlに設定を入力
-`map-firebase.html` の26行目付近にある設定部分を置き換え：
-
-```javascript
-// ⚠️ Firebase設定 - ここに設定情報を入力してください
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY_HERE",  // ← ここを変更
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",  // ← ここを変更
-    projectId: "YOUR_PROJECT_ID",  // ← ここを変更
-    // ... 以下同様
-};
-```
-
-#### ステップ4: 使用開始
-1. 設定後のmap-firebase.htmlをブラウザで開く
-2. 「Firebase接続成功」メッセージが表示されればOK！
-3. レーティングを入力
-4. 他のデバイスでも同じファイルを開けば自動的に同期される
-
----
-
-### オプション3: GitHub Issues版（map-github.html）🆕
+### GitHub Issues版（map-github.html）
 
 **特徴:**
 - ✅ GitHub Issuesをデータベースとして使用
@@ -88,23 +20,22 @@ const firebaseConfig = {
 - ✅ PCやデバイス間でデータ共有可能
 - ⚠️ 注意: 誰でもIssueを見ることができます（公開リポジトリの場合）
 
-**セットアップ手順:**
+**使い方:**
 
-#### ステップ1: Issueの確認
-リポジトリに以下のIssueが作成されています：
-- Issue #1: レーティングデータ
-- Issue #2: 除外設定データ
+1. マップを開く: https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
+2. 「GitHub接続状態: 接続成功 ✓」が表示されればOK
+3. ユーザー選択（松下 / 森田）
+4. 各スポットにレーティングを入力（1〜5つ星）
+5. データは自動的にGitHub Issueのコメントとして保存される
 
-#### ステップ2: 使用開始
-1. map-github.htmlをブラウザで開く
-2. 「GitHub接続状態: 接続成功 ✓」が表示されればOK！
-3. レーティングを入力
-4. データはGitHub Issueのコメントとして自動保存
-
-#### 仕組み
+**仕組み:**
 - **Read**: GitHub REST APIでIssueの最新コメントからJSONデータを取得
 - **Update**: 新しいコメントとしてJSONデータを投稿
 - 履歴が残るため、過去のデータも確認可能
+
+**データ保存先:**
+- [Issue #1: レーティングデータ](https://github.com/mister-X-is-your-father/kumamoto-trip-plan/issues/1)
+- [Issue #2: 除外設定データ](https://github.com/mister-X-is-your-father/kumamoto-trip-plan/issues/2)
 
 ---
 
@@ -128,13 +59,10 @@ const firebaseConfig = {
 
 ## 🚀 GitHub Pagesでの公開
 
-### 現在のURL
-- **マップ（LocalStorage版）:** https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map.html
-- **マップ（Firebase版）:** https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-firebase.html
-- **マップ（GitHub Issues DB版）:** https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
+**マップURL:**
+https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
 
-### 注意
-Firebase版を使用する場合、`map-firebase.html`に設定を入力してからコミット・プッシュする必要があります。
+マップ上部の「📸 スポット一覧・写真・詳細情報を見る」ボタンから、全23スポットの写真と詳細情報が確認できます。
 
 ---
 
@@ -169,30 +97,11 @@ Firebase版を使用する場合、`map-firebase.html`に設定を入力して�
 
 ---
 
-## 💡 よくある質問
-
-### Q: Firebase版とLocalStorage版、どちらを使うべき？
-A: **Firebase版を推奨**します。PC間でデータを共有したい場合は必須です。
-
-### Q: Firebase版の設定は難しい？
-A: 5分程度で完了します。`FIREBASE_SETUP.md`に詳しい手順があります。
-
-### Q: 料金はかかる？
-A: Firebaseの無料枠（Sparkプラン）で十分です。小規模利用なら完全無料。
-
-### Q: データは安全？
-A: 現在の設定では誰でもアクセス可能です。より厳密なセキュリティが必要な場合は、Firebase Authenticationを追加できます。
-
-### Q: LocalStorage版からFirebase版へデータ移行できる？
-A: 手動で移行可能ですが、新規で入力することを推奨します。
-
----
-
 ## 🛠️ 技術スタック
 
 - **フロントエンド:** HTML, CSS, JavaScript
 - **マップ:** Google Maps JavaScript API
-- **データベース:** Firebase Firestore (Firebase版のみ)
+- **データベース:** GitHub Issues (REST API)
 - **ホスティング:** GitHub Pages
 
 ---
