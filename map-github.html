@@ -473,7 +473,16 @@
         }
 
         // Google Maps初期化関数
-        function initMap() {
+        async function initMap() {
+            // GitHubからデータを読み込み
+            try {
+                await loadRatingsFromGitHub();
+                await loadExclusionsFromGitHub();
+            } catch (error) {
+                console.error('初期データ読み込みエラー:', error);
+                updateGitHubStatus('初期化エラー ✗');
+            }
+
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: 32.8, lng: 130.7 },
                 zoom: 10,
