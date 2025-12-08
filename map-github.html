@@ -603,8 +603,8 @@
 
                 // 除外チェックボックスのイベントリスナー
                 const excludeCheckbox = card.querySelector('.exclude-cb');
-                excludeCheckbox.addEventListener('change', (e) => {
-                    const exclusions = exclusionsCache;
+                excludeCheckbox.addEventListener('change', async (e) => {
+                    const exclusions = { ...exclusionsCache };
                     exclusions[spot.name] = e.target.checked;
                     await saveExclusionsToGitHub(exclusions);
 
@@ -644,9 +644,9 @@
                     updateStars(starsContainer, currentRating);
 
                     starsContainer.querySelectorAll('.star').forEach(star => {
-                        star.addEventListener('click', () => {
+                        star.addEventListener('click', async () => {
                             const rating = parseInt(star.dataset.rating);
-                            setRating(spotName, currentUser, criterion, rating);
+                            await setRating(spotName, currentUser, criterion, rating);
                             updateStars(starsContainer, rating);
                         });
                     });
