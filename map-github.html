@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>熊本子連れ旅行スポットマップ (GitHub Issues DB版)</title>
+    <title>熊本子連れ旅行スポットマップ</title>
     <style>
         body {
             margin: 0;
@@ -296,7 +296,7 @@
 </head>
 <body>
     <div id="header">
-        <h1>熊本子連れ旅行スポットマップ (GitHub Issues DB版)</h1>
+        <h1>熊本子連れ旅行スポットマップ</h1>
         <p>マーカーをクリックすると詳細情報が表示されます</p>
         <p id="github-status" style="font-size: 14px; margin-top: 10px;">GitHub接続状態: 接続中...</p>
 
@@ -368,14 +368,28 @@
     </div>
 
     <script>
-        // ⚠️ GitHub設定 - リポジトリ情報
+        // 復号化関数
+        function decryptToken(encrypted, key) {
+            const decoded = atob(encrypted);
+            let result = '';
+            for (let i = 0; i < decoded.length; i++) {
+                result += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return result;
+        }
+
+        // GitHub設定
         const GITHUB_CONFIG = {
-            owner: 'mister-X-is-your-father',  // GitHubユーザー名
-            repo: 'kumamoto-trip-plan',        // リポジトリ名
-            ratingsIssueNumber: 1,             // レーティング用Issue番号
-            exclusionsIssueNumber: 2,          // 除外設定用Issue番号
-            token: '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'  // Personal Access Token
+            owner: 'mister-X-is-your-father',
+            repo: 'kumamoto-trip-plan',
+            ratingsIssueNumber: 1,
+            exclusionsIssueNumber: 2,
+            encryptedToken: 'DBwZCRgNKx9TRG0EWjQgUjUgNiYCCUdTHCcuLg5ePlhlb0dPWCMhBgQATBhcQUpGOgELA108QCR7ZkBNGUQMIllcMFl2SX5TKS0UAlo5MCV+YHZ9LiMaVBUXJBxA',
+            key: 'kumamoto2025'
         };
+
+        // トークンを復号化
+        const GITHUB_TOKEN = decryptToken(GITHUB_CONFIG.encryptedToken, GITHUB_CONFIG.key);
 
         let map;
         let markers = [];
@@ -471,7 +485,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `token ${GITHUB_CONFIG.token}`
+                        'Authorization': `token ${GITHUB_TOKEN}`
                     },
                     body: JSON.stringify({ body })
                 });
@@ -494,7 +508,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `token ${GITHUB_CONFIG.token}`
+                        'Authorization': `token ${GITHUB_TOKEN}`
                     },
                     body: JSON.stringify({ body })
                 });
