@@ -374,7 +374,7 @@
             repo: 'kumamoto-trip-plan',        // リポジトリ名
             ratingsIssueNumber: 1,             // レーティング用Issue番号
             exclusionsIssueNumber: 2,          // 除外設定用Issue番号
-            token: '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'  // Personal Access Token
+            token: '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'  // Personal Access Token
         };
 
         let map;
@@ -471,7 +471,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${GITHUB_CONFIG.token}`
+                        'Authorization': `token ${GITHUB_CONFIG.token}`
                     },
                     body: JSON.stringify({ body })
                 });
@@ -494,7 +494,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${GITHUB_CONFIG.token}`
+                        'Authorization': `token ${GITHUB_CONFIG.token}`
                     },
                     body: JSON.stringify({ body })
                 });
