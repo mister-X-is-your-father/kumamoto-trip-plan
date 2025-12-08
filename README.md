@@ -8,6 +8,7 @@
 - **熊本子連れ旅行プラン.md** - 全23箇所の観光スポット詳細情報
 - **map.html** - インタラクティブマップ（LocalStorage版）
 - **map-firebase.html** - インタラクティブマップ（Firebase版）✨推奨
+- **map-github.html** - インタラクティブマップ（GitHub Issues DB版）🆕
 
 ### セットアップガイド
 - **FIREBASE_SETUP.md** - Firebase初期設定の詳細手順
@@ -78,6 +79,35 @@ const firebaseConfig = {
 
 ---
 
+### オプション3: GitHub Issues版（map-github.html）🆕
+
+**特徴:**
+- ✅ GitHub Issuesをデータベースとして使用
+- ✅ サーバー不要、認証不要
+- ✅ データはGitHub Issuesのコメントに保存
+- ✅ PCやデバイス間でデータ共有可能
+- ⚠️ 注意: 誰でもIssueを見ることができます（公開リポジトリの場合）
+
+**セットアップ手順:**
+
+#### ステップ1: Issueの確認
+リポジトリに以下のIssueが作成されています：
+- Issue #1: レーティングデータ
+- Issue #2: 除外設定データ
+
+#### ステップ2: 使用開始
+1. map-github.htmlをブラウザで開く
+2. 「GitHub接続状態: 接続成功 ✓」が表示されればOK！
+3. レーティングを入力
+4. データはGitHub Issueのコメントとして自動保存
+
+#### 仕組み
+- **Read**: GitHub REST APIでIssueの最新コメントからJSONデータを取得
+- **Update**: 新しいコメントとしてJSONデータを投稿
+- 履歴が残るため、過去のデータも確認可能
+
+---
+
 ## ⭐ レーティング機能
 
 ### 評価項目（各5段階）
@@ -101,6 +131,7 @@ const firebaseConfig = {
 ### 現在のURL
 - **マップ（LocalStorage版）:** https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map.html
 - **マップ（Firebase版）:** https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-firebase.html
+- **マップ（GitHub Issues DB版）:** https://mister-x-is-your-father.github.io/kumamoto-trip-plan/map-github.html
 
 ### 注意
 Firebase版を使用する場合、`map-firebase.html`に設定を入力してからコミット・プッシュする必要があります。

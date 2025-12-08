@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>熊本子連れ旅行スポットマップ (GitHub Issues DB版)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        #header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        #user-selector {
+            background-color: #34495e;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        #user-selector label {
+            margin: 0 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #user-selector input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+
+        #info {
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .spot-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .spot-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .spot-card.excluded {
+            opacity: 0.4;
+            background-color: #e0e0e0;
+        }
+
+        .spot-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .spot-card h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        .spot-card .category {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .spot-card .address {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .exclude-checkbox {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .exclude-checkbox input {
+            margin-right: 5px;
+        }
+
+        .rating-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .rating-item {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rating-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 100px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            cursor: pointer;
+            font-size: 20px;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+
+        .star.filled {
+            color: #f39c12;
+        }
+
+        .star:hover {
+            color: #f39c12;
+        }
+
+        .rating-display {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .user-rating {
+            margin: 5px 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #3498db;
+        }
+
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .legend h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #333;
+        }
+
+        .goto-map-btn {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .goto-map-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>熊本子連れ旅行スポットマップ (GitHub Issues DB版)</h1>
+        <p>マーカーをクリックすると詳細情報が表示されます</p>
+        <p id="github-status" style="font-size: 14px; margin-top: 10px;">GitHub接続状態: 接続中...</p>
+    </div>
+
+    <div id="user-selector">
+        <strong>レーティングユーザー:</strong>
+        <label>
+            <input type="radio" name="user" value="matsushita" checked>
+            松下
+        </label>
+        <label>
+            <input type="radio" name="user" value="morita">
+            森田
+        </label>
+    </div>
+
+    <div id="map"></div>
+
+    <div id="info">
+        <div class="legend">
+            <h3>マーカーの色</h3>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e74c3c;"></div>
+                <span>テーマパーク・遊園地</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #27ae60;"></div>
+                <span>動物園・自然体験・観光牧場・水族館</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #f39c12;"></div>
+                <span>公園・遊具施設・道の駅・工場見学</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #3498db;"></div>
+                <span>アウトドア・アクティビティ・ドライブコース</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #9b59b6;"></div>
+                <span>歴史・文化施設・博物館</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #e67e22;"></div>
+                <span>温泉施設</span>
+            </div>
+        </div>
+
+        <h2 style="color: #2c3e50; margin-bottom: 15px;">観光スポット一覧</h2>
+        <div class="spot-list" id="spotList"></div>
+    </div>
+
+    <script>
+        // ⚠️ GitHub設定 - リポジトリ情報
+        const GITHUB_CONFIG = {
+            owner: 'mister-X-is-your-father',  // GitHubユーザー名
+            repo: 'kumamoto-trip-plan',        // リポジトリ名
+            ratingsIssueNumber: 1,             // レーティング用Issue番号
+            exclusionsIssueNumber: 2           // 除外設定用Issue番号
+        };
+
+        let map;
+        let markers = [];
+        let infoWindows = [];
+        let currentUser = 'matsushita';
+        let ratingsCache = {};
+        let exclusionsCache = {};
+
+        // 観光スポットデータ
+        const spots = [
+            { name: 'グリーンランド', category: 'テーマパーク・遊園地', lat: 32.9864, lng: 130.4347, address: '熊本県荒尾市緑ケ丘', description: '西日本最大級の遊園地。約70種類以上のアトラクションがあります。', url: 'https://www.greenland.co.jp/park', color: '#e74c3c' },
+            { name: '阿蘇ファームランド', category: 'テーマパーク・遊園地', lat: 32.8494, lng: 131.0536, address: '熊本県阿蘇郡南阿蘇村河陽5579-3', description: '健康をテーマにした体験型テーマパーク。入園無料で動物とのふれあいも楽しめます。', url: 'https://asofarmland.co.jp/', color: '#e74c3c' },
+            { name: '熊本市動植物園', category: '動物園・自然体験', lat: 32.7527, lng: 130.7614, address: '熊本県熊本市東区健軍5-14-2', description: '約120種700頭の動物と800種50,000点の植物。キンシコウを日本で唯一見られます。', url: 'https://www.ezooko.jp/', color: '#27ae60' },
+            { name: 'ひごっこジャングル（坪井川緑地）', category: '公園・遊具施設', lat: 32.8278, lng: 130.6833, address: '熊本県熊本市北区清水町坪井川緑地内', description: '熊本市内最大級の大型複合遊具施設。150種類以上の遊具があり、無料で楽しめます。', url: 'https://www.city.kumamoto.jp/kiji00332062/', color: '#f39c12' },
+            { name: '阿蘇ネイチャーランド', category: 'アウトドア・アクティビティ', lat: 32.8856, lng: 131.1097, address: '熊本県阿蘇市内牧1092-1', description: 'パラグライダー、熱気球、マウンテンボードなどのアウトドア体験ができます。', url: 'https://asonatureland.com/', color: '#3498db' },
+            { name: '熊本城', category: '歴史・文化施設', lat: 32.8064, lng: 130.7056, address: '熊本県熊本市中央区本丸1-1', description: '日本三名城の一つ。ベビーカーでの入園も可能です。', url: 'https://castle.kumamoto-guide.jp/', color: '#9b59b6' },
+            { name: 'ONE PIECE ルフィ像（熊本県庁）', category: '歴史・文化施設', lat: 32.7897, lng: 130.7417, address: '熊本県熊本市中央区水前寺6-18-1', description: '熊本復興プロジェクトとして設置された麦わらの一味の像。県内9市町村に10体設置。', url: 'https://op-kumamoto.com/', color: '#9b59b6' },
+            { name: '黒川温泉', category: '温泉施設', lat: 33.0347, lng: 131.1169, address: '熊本県阿蘇郡南小国町黒川温泉', description: '冬の夜に鞠灯篭と筒灯篭でライトアップされる幻想的な温泉街。', url: 'https://www.kurokawaonsen.or.jp/', color: '#e67e22' },
+            { name: '高森田楽保存会', category: '飲食・文化施設', lat: 32.8228, lng: 131.1294, address: '熊本県阿蘇郡高森町大字上色見2639', description: '茅葺き屋根の古民家で囲炉裏を囲みながら伝統的な田楽を味わえます。', url: 'https://dengaku-hozonkai.com/', color: '#9b59b6' },
+            { name: '崎津教会', category: '歴史・文化施設', lat: 32.2917, lng: 130.0142, address: '熊本県天草市河浦町崎津539', description: '世界遺産「潜伏キリシタン関連遺産」の構成資産。海の天主堂とも呼ばれます。', url: 'https://kumamoto.guide/spots/detail/917', color: '#9b59b6' },
+            { name: '御船町恐竜博物館', category: '博物館', lat: 32.7086, lng: 130.8061, address: '熊本県上益城郡御船町大字御船995-6', description: '日本で最初に肉食恐竜の化石が発見された御船町の恐竜専門博物館。', url: 'https://mifunemuseum.jp/', color: '#9b59b6' },
+            { name: '草千里ヶ浜', category: '自然景観', lat: 32.8842, lng: 131.0236, address: '熊本県阿蘇市永草2391-15', description: '阿蘇五岳を一望できる広大な草原。放牧された馬が草を食む牧歌的な風景。', url: 'https://www.newkusasenri.com/', color: '#27ae60' },
+            { name: '阿蘇ミルク牧場', category: '観光牧場', lat: 32.8317, lng: 130.9486, address: '熊本県阿蘇郡西原村河原3944-1', description: '動物とのふれあいや手作り体験が楽しめる観光牧場。新鮮な牛乳とソフトクリームが人気。', url: 'https://aso-milk.jp/', color: '#27ae60' },
+            { name: 'ミルクロード（大観峰）', category: 'ドライブコース', lat: 32.9544, lng: 131.0894, address: '熊本県阿蘇市', description: '阿蘇外輪山の北側を走る全長約45kmの絶景ドライブルート。', url: 'https://jafmate.jp/drive/driveroute_20231106.html', color: '#3498db' },
+            { name: '天草市立御所浦恐竜の島博物館', category: '博物館', lat: 32.2797, lng: 130.4139, address: '熊本県天草市御所浦町御所浦4310-5', description: '化石の島・御所浦の恐竜専門博物館。化石採集体験もできます。', url: 'https://goshouramuseum.jp/', color: '#9b59b6' },
+            { name: '海中水族館シードーナツ', category: '水族館', lat: 32.4506, lng: 130.4339, address: '熊本県上天草市松島町合津6225-8', description: '西日本で唯一の海に浮かぶドーナツ型水族館。イルカとのふれあい体験も人気。', url: 'https://amakusapearl.com/', color: '#27ae60' },
+            { name: '道の駅 有明リップルランド', category: '道の駅', lat: 32.6697, lng: 130.1531, address: '熊本県天草市有明町上津浦1955', description: '有明海に面した道の駅。島原半島や雲仙普賢岳を一望できる絶景スポット。', url: 'https://kumamoto.guide/spots/detail/9027', color: '#f39c12' },
+            { name: '山鹿灯籠民芸館', category: '博物館', lat: 33.0172, lng: 130.6922, address: '熊本県山鹿市山鹿1606-2', description: '和紙と糊だけで作られる伝統工芸品「山鹿灯籠」を展示。国の重要文化財。', url: 'https://yamaga.site/?page_id=1550', color: '#9b59b6' },
+            { name: '肥後民家村', category: '文化施設', lat: 33.0208, lng: 130.6217, address: '熊本県玉名郡和水町江田302', description: '県内各地から移築復元した古民家が点在。昔の日本の暮らしを体験できます。', url: 'https://kumamoto.guide/spots/detail/12066', color: '#9b59b6' },
+            { name: 'にしきひみつ基地ミュージアム', category: '博物館', lat: 32.2256, lng: 130.7817, address: '熊本県球磨郡錦町木上西2-107', description: '旧人吉海軍航空基地の資料を展示。山の中に作られた海軍の施設跡を見学できます。', url: 'https://132base.jp/', color: '#9b59b6' },
+            { name: '釜田醸造所', category: '工場見学', lat: 32.2086, lng: 130.7597, address: '熊本県人吉市鍛冶屋町45', description: '人吉の老舗味噌・醤油醸造所。伝統的な製法の製造工程を見学できます。', url: 'http://www.marukama.co.jp/', color: '#f39c12' },
+            { name: '黒川温泉（温泉街）', category: '温泉街', lat: 33.0347, lng: 131.1169, address: '熊本県阿蘇郡南小国町黒川温泉', description: '阿蘇の奥座敷。約30軒の旅館が軒を連ね、入湯手形で湯めぐりが楽しめます。', url: 'https://www.kurokawaonsen.or.jp/', color: '#e67e22' },
+            { name: 'JR熊本駅（アミュプラザ）', category: 'ショッピング', lat: 32.7969, lng: 130.6889, address: '熊本県熊本市西区春日3-15-30', description: 'アミュプラザくまもと。約186店舗が入る大型商業施設。', url: 'https://www.jrkumamotocity.com/', color: '#f39c12' }
+        ];
+
+        // GitHub Issues APIを使用してデータを読み取り
+        async function loadRatingsFromGitHub() {
+            try {
+                const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.ratingsIssueNumber}/comments`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Failed to fetch ratings');
+
+                const comments = await response.json();
+                if (comments.length > 0) {
+                    const latestComment = comments[comments.length - 1];
+                    // Extract JSON from code block if present
+                    const jsonMatch = latestComment.body.match(/```json\n([\s\S]*?)\n```/) || latestComment.body.match(/```\n([\s\S]*?)\n```/);
+                    if (jsonMatch) {
+                        ratingsCache = JSON.parse(jsonMatch[1]);
+                    } else {
+                        ratingsCache = JSON.parse(latestComment.body);
+                    }
+                }
+                updateGitHubStatus('接続成功 ✓');
+                return ratingsCache;
+            } catch (error) {
+                console.error('レーティング読み込みエラー:', error);
+                updateGitHubStatus('接続エラー ✗');
+                return {};
+            }
+        }
+
+        async function loadExclusionsFromGitHub() {
+            try {
+                const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.exclusionsIssueNumber}/comments`;
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Failed to fetch exclusions');
+
+                const comments = await response.json();
+                if (comments.length > 0) {
+                    const latestComment = comments[comments.length - 1];
+                    const jsonMatch = latestComment.body.match(/```json\n([\s\S]*?)\n```/) || latestComment.body.match(/```\n([\s\S]*?)\n```/);
+                    if (jsonMatch) {
+                        exclusionsCache = JSON.parse(jsonMatch[1]);
+                    } else {
+                        exclusionsCache = JSON.parse(latestComment.body);
+                    }
+                }
+                return exclusionsCache;
+            } catch (error) {
+                console.error('除外設定読み込みエラー:', error);
+                return {};
+            }
+        }
+
+        // GitHub Issuesにデータを保存
+        async function saveRatingsToGitHub(ratings) {
+            try {
+                const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.ratingsIssueNumber}/comments`;
+                const body = `\`\`\`json\n${JSON.stringify(ratings, null, 2)}\n\`\`\``;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ body })
+                });
+
+                if (!response.ok) throw new Error('Failed to save ratings');
+                ratingsCache = ratings;
+                updateGitHubStatus('保存成功 ✓');
+            } catch (error) {
+                console.error('レーティング保存エラー:', error);
+                updateGitHubStatus('保存エラー ✗');
+            }
+        }
+
+        async function saveExclusionsToGitHub(exclusions) {
+            try {
+                const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/issues/${GITHUB_CONFIG.exclusionsIssueNumber}/comments`;
+                const body = `\`\`\`json\n${JSON.stringify(exclusions, null, 2)}\n\`\`\``;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ body })
+                });
+
+                if (!response.ok) throw new Error('Failed to save exclusions');
+                exclusionsCache = exclusions;
+            } catch (error) {
+                console.error('除外設定保存エラー:', error);
+            }
+        }
+
+        function updateGitHubStatus(message) {
+            const statusEl = document.getElementById('github-status');
+            if (statusEl) {
+                statusEl.textContent = `GitHub接続状態: ${message}`;
+            }
+        }
+
+        // レーティングを設定
+        async function setRating(spotName, user, criterion, rating) {
+            const ratings = { ...ratingsCache };
+            if (!ratings[spotName]) ratings[spotName] = {};
+            if (!ratings[spotName][user]) ratings[spotName][user] = {};
+            ratings[spotName][user][criterion] = rating;
+            await saveRatingsToGitHub(ratings);
+            updateRatingDisplay(spotName);
+        }
+
+        // レーティングを取得
+        function getRating(spotName, user, criterion) {
+            return ratingsCache[spotName]?.[user]?.[criterion] || 0;
+        }
+
+        // 除外設定を切り替え
+        async function toggleExclusion(spotName) {
+            const exclusions = { ...exclusionsCache };
+            exclusions[spotName] = !exclusions[spotName];
+            await saveExclusionsToGitHub(exclusions);
+            updateSpotVisibility(spotName);
+        }
+
+        // 除外設定を取得
+        function isExcluded(spotName) {
+            return exclusionsCache[spotName] || false;
+        }
+
+        // 星の表示を更新
+        function updateStars(container, rating) {
+            const stars = container.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                }
+            });
+        }
+
+        // レーティング表示を更新
+        function updateRatingDisplay(spotName) {
+            const ratings = ratingsCache;
+            const displayDiv = document.querySelector(`[data-spot="${spotName}"] .rating-display`);
+            if (!displayDiv) return;
+
+            const spotRatings = ratings[spotName] || {};
+            let html = '<strong>現在のレーティング:</strong><br>';
+
+            ['matsushita', 'morita'].forEach(user => {
+                const userName = user === 'matsushita' ? '松下' : '森田';
+                const userRatings = spotRatings[user] || {};
+                const child = userRatings['child'] || 0;
+                const access = userRatings['access'] || 0;
+                const unique = userRatings['unique'] || 0;
+
+                if (child || access || unique) {
+                    html += `<div class="user-rating">
+                        <span class="user-name">${userName}:</span>
+                        子ども${child}★ / 行き${access}★ / ここ${unique}★
+                    </div>`;
+                }
+            });
+
+            displayDiv.innerHTML = html;
+        }
+
+        // Google Maps初期化関数
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 32.8, lng: 130.7 },
+                zoom: 10,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true
+            });
+
+            const bounds = new google.maps.LatLngBounds();
+            const exclusions = exclusionsCache;
+
+            spots.forEach((spot, index) => {
+                const position = { lat: spot.lat, lng: spot.lng };
+                const isExcluded = exclusions[spot.name] || false;
+
+                const markerIcon = {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: spot.color,
+                    fillOpacity: isExcluded ? 0.3 : 1,
+                    strokeColor: '#ffffff',
+                    strokeWeight: 3,
+                    scale: 12
+                };
+
+                const marker = new google.maps.Marker({
+                    position: position,
+                    map: map,
+                    title: spot.name,
+                    icon: markerIcon,
+                    animation: google.maps.Animation.DROP,
+                    visible: !isExcluded
+                });
+
+                const infoWindowContent = `
+                    <div class="info-window">
+                        <div class="info-window-title">${spot.name}</div>
+                        <div class="info-window-category" style="background-color: ${spot.color};">${spot.category}</div>
+                        <div class="info-window-description">${spot.description}</div>
+                        <div class="info-window-address">📍 ${spot.address}</div>
+                        <a href="${spot.url}" target="_blank" class="info-window-link">公式サイトを見る →</a>
+                    </div>
+                `;
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: infoWindowContent
+                });
+
+                marker.addListener('click', () => {
+                    infoWindows.forEach(iw => iw.close());
+                    infoWindow.open(map, marker);
+                });
+
+                markers.push(marker);
+                infoWindows.push(infoWindow);
+                bounds.extend(position);
+            });
+
+            map.fitBounds(bounds);
+            createSpotCards();
+        }
+
+        // スポットカードを作成
+        function createSpotCards() {
+            const spotListDiv = document.getElementById('spotList');
+            const exclusions = exclusionsCache;
+
+            spots.forEach((spot, index) => {
+                const isExcluded = exclusions[spot.name] || false;
+                const card = document.createElement('div');
+                card.className = 'spot-card' + (isExcluded ? ' excluded' : '');
+                card.setAttribute('data-spot', spot.name);
+
+                card.innerHTML = `
+                    <div class="category" style="background-color: ${spot.color};">${spot.category}</div>
+                    <h3>${spot.name}</h3>
+                    <p style="font-size: 14px; margin: 10px 0;">${spot.description}</p>
+                    <div class="address">📍 ${spot.address}</div>
+
+                    <div class="exclude-checkbox">
+                        <label>
+                            <input type="checkbox" class="exclude-cb" data-spot="${spot.name}" ${isExcluded ? 'checked' : ''}>
+                            除外する
+                        </label>
+                    </div>
+
+                    <button class="goto-map-btn" data-index="${index}">マップで表示</button>
+
+                    <div class="rating-section">
+                        <strong>レーティング (現在: <span class="current-user-name">松下</span>)</strong>
+                        <div class="rating-item">
+                            <span class="rating-label">子ども喜び度</span>
+                            <div class="stars" data-spot="${spot.name}" data-criterion="child">
+                                ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="rating-item">
+                            <span class="rating-label">行きやすさ</span>
+                            <div class="stars" data-spot="${spot.name}" data-criterion="access">
+                                ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="rating-item">
+                            <span class="rating-label">ここならでは</span>
+                            <div class="stars" data-spot="${spot.name}" data-criterion="unique">
+                                ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="rating-display"></div>
+                    </div>
+                `;
+
+                // 除外チェックボックスのイベントリスナー
+                const excludeCheckbox = card.querySelector('.exclude-cb');
+                excludeCheckbox.addEventListener('change', (e) => {
+                    const exclusions = exclusionsCache;
+                    exclusions[spot.name] = e.target.checked;
+                    await saveExclusionsToGitHub(exclusions);
+
+                    // カードの表示を更新
+                    card.classList.toggle('excluded', e.target.checked);
+
+                    // マーカーの表示を更新
+                    markers[index].setVisible(!e.target.checked);
+                    markers[index].setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: spot.color,
+                        fillOpacity: e.target.checked ? 0.3 : 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 3,
+                        scale: 12
+                    });
+                });
+
+                // マップ表示ボタン
+                const gotoBtn = card.querySelector('.goto-map-btn');
+                gotoBtn.addEventListener('click', () => {
+                    const position = { lat: spot.lat, lng: spot.lng };
+                    map.setCenter(position);
+                    map.setZoom(14);
+                    infoWindows.forEach(iw => iw.close());
+                    infoWindows[index].open(map, markers[index]);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+
+                // 星のクリックイベント
+                card.querySelectorAll('.stars').forEach(starsContainer => {
+                    const spotName = starsContainer.dataset.spot;
+                    const criterion = starsContainer.dataset.criterion;
+
+                    // 初期表示
+                    const currentRating = getRating(spotName, currentUser, criterion);
+                    updateStars(starsContainer, currentRating);
+
+                    starsContainer.querySelectorAll('.star').forEach(star => {
+                        star.addEventListener('click', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            setRating(spotName, currentUser, criterion, rating);
+                            updateStars(starsContainer, rating);
+                        });
+                    });
+                });
+
+                updateRatingDisplay(spot.name);
+                spotListDiv.appendChild(card);
+            });
+        }
+
+        // ユーザー選択の変更
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[name="user"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    currentUser = e.target.value;
+                    const userName = currentUser === 'matsushita' ? '松下' : '森田';
+
+                    // 現在のユーザー名を更新
+                    document.querySelectorAll('.current-user-name').forEach(el => {
+                        el.textContent = userName;
+                    });
+
+                    // 全ての星の表示を更新
+                    document.querySelectorAll('.stars').forEach(starsContainer => {
+                        const spotName = starsContainer.dataset.spot;
+                        const criterion = starsContainer.dataset.criterion;
+                        const rating = getRating(spotName, currentUser, criterion);
+                        updateStars(starsContainer, rating);
+                    });
+                });
+            });
+        });
+
+        // エラーハンドリング
+        window.gm_authFailure = function() {
+            console.error('Google Maps APIキーが無効です。');
+        };
+    </script>
+
+    <!-- Google Maps API読み込み -->
+    <script src="https://maps.googleapis.com/maps/api/js?callback=initMap&language=ja" async defer></script>
+</body>
+</html>
