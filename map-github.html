@@ -23,6 +23,18 @@
             font-size: 24px;
         }
 
+        #header a {
+            color: #3498db;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        #header a:hover {
+            color: #5dade2;
+            text-decoration: underline;
+        }
+
         #user-selector {
             background-color: #34495e;
             color: white;
@@ -213,6 +225,11 @@
         <h1>熊本子連れ旅行スポットマップ (GitHub Issues DB版)</h1>
         <p>マーカーをクリックすると詳細情報が表示されます</p>
         <p id="github-status" style="font-size: 14px; margin-top: 10px;">GitHub接続状態: 接続中...</p>
+        <p style="font-size: 14px; margin-top: 5px;">
+            📝 <a href="https://github.com/mister-X-is-your-father/kumamoto-trip-plan/issues/1" target="_blank">レーティング一覧</a> |
+            🚫 <a href="https://github.com/mister-X-is-your-father/kumamoto-trip-plan/issues/2" target="_blank">除外設定一覧</a> |
+            📋 <a href="https://github.com/mister-X-is-your-father/kumamoto-trip-plan/issues" target="_blank">全Issue一覧</a>
+        </p>
     </div>
 
     <div id="user-selector">
