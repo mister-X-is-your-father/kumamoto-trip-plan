@@ -542,6 +542,21 @@
             return ratingsCache[spotName]?.[user]?.[criterion] || 0;
         }
 
+        // コメントを設定
+        async function setComment(spotName, user, comment) {
+            const ratings = { ...ratingsCache };
+            if (!ratings[spotName]) ratings[spotName] = {};
+            if (!ratings[spotName][user]) ratings[spotName][user] = {};
+            ratings[spotName][user]['comment'] = comment;
+            await saveRatingsToGitHub(ratings);
+            updateRatingDisplay(spotName);
+        }
+
+        // コメントを取得
+        function getComment(spotName, user) {
+            return ratingsCache[spotName]?.[user]?['comment'] || '';
+        }
+
         // 除外設定を切り替え
         async function toggleExclusion(spotName) {
             const exclusions = { ...exclusionsCache };
@@ -582,12 +597,16 @@
                 const child = userRatings['child'] || 0;
                 const access = userRatings['access'] || 0;
                 const unique = userRatings['unique'] || 0;
+                const comment = userRatings['comment'] || '';
 
-                if (child || access || unique) {
+                if (child || access || unique || comment) {
                     html += `<div class="user-rating">
                         <span class="user-name">${userName}:</span>
-                        子ども${child}★ / 行き${access}★ / ここ${unique}★
-                    </div>`;
+                        子ども${child}★ / 行き${access}★ / ここ${unique}★`;
+                    if (comment) {
+                        html += `<br><span style="color: #555; font-size: 12px;">💬 ${comment}</span>`;
+                    }
+                    html += `</div>`;
                 }
             });
 
@@ -641,6 +660,12 @@
                     map: map,
                     title: spot.name,
                     icon: markerIcon,
+                    label: {
+                        text: spot.name,
+                        color: '#333',
+                        fontSize: '11px',
+                        fontWeight: 'bold'
+                    },
                     animation: google.maps.Animation.DROP,
                     visible: !isExcluded
                 });
@@ -719,6 +744,10 @@
                                 ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
                             </div>
                         </div>
+                        <div class="rating-item" style="margin-top: 10px;">
+                            <span class="rating-label">コメント</span>
+                            <textarea class="comment-input" data-spot="${spot.name}" placeholder="コメントを入力..." style="width: 100%; min-height: 60px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;"></textarea>
+                        </div>
                         <div class="rating-display"></div>
                     </div>
                 `;
@@ -774,6 +803,22 @@
                     });
                 });
 
+                // コメント入力のイベントリスナー
+                const commentInput = card.querySelector('.comment-input');
+                const spotName = spot.name;
+
+                // 初期表示
+                commentInput.value = getComment(spotName, currentUser);
+
+                // 入力時に自動保存（debounce）
+                let commentTimeout;
+                commentInput.addEventListener('input', () => {
+                    clearTimeout(commentTimeout);
+                    commentTimeout = setTimeout(async () => {
+                        await setComment(spotName, currentUser, commentInput.value);
+                    }, 1000); // 1秒後に保存
+                });
+
                 updateRatingDisplay(spot.name);
                 spotListDiv.appendChild(card);
             });
@@ -797,6 +842,12 @@
                         const criterion = starsContainer.dataset.criterion;
                         const rating = getRating(spotName, currentUser, criterion);
                         updateStars(starsContainer, rating);
+                    });
+
+                    // 全てのコメント入力欄を更新
+                    document.querySelectorAll('.comment-input').forEach(commentInput => {
+                        const spotName = commentInput.dataset.spot;
+                        commentInput.value = getComment(spotName, currentUser);
                     });
                 });
             });
