@@ -23,17 +23,21 @@
             font-size: 24px;
         }
 
-        #api-notice {
-            background-color: #f39c12;
+        #user-selector {
+            background-color: #34495e;
             color: white;
-            padding: 10px;
+            padding: 15px;
             text-align: center;
-            font-size: 14px;
         }
 
-        #api-notice a {
-            color: white;
-            text-decoration: underline;
+        #user-selector label {
+            margin: 0 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #user-selector input[type="radio"] {
+            margin-right: 5px;
         }
 
         #map {
@@ -48,8 +52,8 @@
 
         .spot-list {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
             margin-top: 20px;
         }
 
@@ -58,8 +62,12 @@
             border-radius: 8px;
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .spot-card.excluded {
+            opacity: 0.4;
+            background-color: #e0e0e0;
         }
 
         .spot-card:hover {
@@ -89,6 +97,72 @@
             margin: 5px 0;
         }
 
+        .exclude-checkbox {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .exclude-checkbox input {
+            margin-right: 5px;
+        }
+
+        .rating-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .rating-item {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .rating-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 100px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            cursor: pointer;
+            font-size: 20px;
+            color: #ddd;
+            transition: color 0.2s;
+        }
+
+        .star.filled {
+            color: #f39c12;
+        }
+
+        .star:hover {
+            color: #f39c12;
+        }
+
+        .rating-display {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .user-rating {
+            margin: 5px 0;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #3498db;
+        }
+
         .legend {
             background: white;
             padding: 15px;
@@ -116,65 +190,40 @@
             border: 2px solid #333;
         }
 
-        .gm-style-iw {
-            max-width: 300px;
-        }
-
-        .info-window {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .info-window-title {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-
-        .info-window-category {
-            background-color: #3498db;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 11px;
-            display: inline-block;
-            margin-bottom: 8px;
-        }
-
-        .info-window-description {
-            font-size: 13px;
-            line-height: 1.6;
-            margin: 8px 0;
-        }
-
-        .info-window-address {
-            color: #7f8c8d;
-            font-size: 12px;
-            margin: 8px 0;
-        }
-
-        .info-window-link {
+        .goto-map-btn {
             display: inline-block;
             margin-top: 8px;
-            color: #3498db;
-            text-decoration: none;
+            padding: 5px 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             font-size: 13px;
+            text-decoration: none;
         }
 
-        .info-window-link:hover {
-            text-decoration: underline;
+        .goto-map-btn:hover {
+            background-color: #2980b9;
         }
     </style>
 </head>
 <body>
     <div id="header">
         <h1>熊本子連れ旅行スポットマップ</h1>
-        <p>マーカーをクリックすると詳細情報が表示されます（Google Maps版）</p>
+        <p>マーカーをクリックすると詳細情報が表示されます</p>
     </div>
 
-    <!-- APIキー設定の注意書き -->
-    <div id="api-notice" style="display: none;">
-        ⚠️ Google Maps APIキーを設定してください。<a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank">APIキーの取得方法</a>
+    <div id="user-selector">
+        <strong>レーティングユーザー:</strong>
+        <label>
+            <input type="radio" name="user" value="matsushita" checked>
+            松下
+        </label>
+        <label>
+            <input type="radio" name="user" value="morita">
+            森田
+        </label>
     </div>
 
     <div id="map"></div>
@@ -212,240 +261,116 @@
         <div class="spot-list" id="spotList"></div>
     </div>
 
-    <!-- Google Maps JavaScript API -->
-    <!--
-        APIキーの設定方法：
-        1. Google Cloud Consoleでプロジェクトを作成
-        2. Maps JavaScript APIを有効化
-        3. APIキーを作成
-        4. 下記のYOUR_API_KEY_HEREを実際のAPIキーに置き換え
-
-        APIキーがない場合でも開発目的で一時的に動作しますが、
-        本番環境では必ずAPIキーを設定してください。
-    -->
     <script>
-        // Google Maps初期化前のグローバル変数
         let map;
         let markers = [];
         let infoWindows = [];
+        let currentUser = 'matsushita';
 
         // 観光スポットデータ
         const spots = [
-            {
-                name: 'グリーンランド',
-                category: 'テーマパーク・遊園地',
-                lat: 32.9864,
-                lng: 130.4347,
-                address: '熊本県荒尾市緑ケ丘',
-                description: '西日本最大級の遊園地。約70種類以上のアトラクションがあります。',
-                url: 'https://www.greenland.co.jp/park',
-                color: '#e74c3c'
-            },
-            {
-                name: '阿蘇ファームランド',
-                category: 'テーマパーク・遊園地',
-                lat: 32.8494,
-                lng: 131.0536,
-                address: '熊本県阿蘇郡南阿蘇村河陽5579-3',
-                description: '健康をテーマにした体験型テーマパーク。入園無料で動物とのふれあいも楽しめます。',
-                url: 'https://asofarmland.co.jp/',
-                color: '#e74c3c'
-            },
-            {
-                name: '熊本市動植物園',
-                category: '動物園・自然体験',
-                lat: 32.7527,
-                lng: 130.7614,
-                address: '熊本県熊本市東区健軍5-14-2',
-                description: '約120種700頭の動物と800種50,000点の植物。キンシコウを日本で唯一見られます。',
-                url: 'https://www.ezooko.jp/',
-                color: '#27ae60'
-            },
-            {
-                name: 'ひごっこジャングル（坪井川緑地）',
-                category: '公園・遊具施設',
-                lat: 32.8278,
-                lng: 130.6833,
-                address: '熊本県熊本市北区清水町坪井川緑地内',
-                description: '熊本市内最大級の大型複合遊具施設。150種類以上の遊具があり、無料で楽しめます。',
-                url: 'https://www.city.kumamoto.jp/kiji00332062/',
-                color: '#f39c12'
-            },
-            {
-                name: '阿蘇ネイチャーランド',
-                category: 'アウトドア・アクティビティ',
-                lat: 32.8856,
-                lng: 131.1097,
-                address: '熊本県阿蘇市内牧1092-1',
-                description: 'パラグライダー、熱気球、マウンテンボードなどのアウトドア体験ができます。',
-                url: 'https://asonatureland.com/',
-                color: '#3498db'
-            },
-            {
-                name: '熊本城',
-                category: '歴史・文化施設',
-                lat: 32.8064,
-                lng: 130.7056,
-                address: '熊本県熊本市中央区本丸1-1',
-                description: '日本三名城の一つ。ベビーカーでの入園も可能です。',
-                url: 'https://castle.kumamoto-guide.jp/',
-                color: '#9b59b6'
-            },
-            {
-                name: 'ONE PIECE ルフィ像（熊本県庁）',
-                category: '歴史・文化施設',
-                lat: 32.7897,
-                lng: 130.7417,
-                address: '熊本県熊本市中央区水前寺6-18-1',
-                description: '熊本復興プロジェクトとして設置された麦わらの一味の像。県内9市町村に10体設置。',
-                url: 'https://op-kumamoto.com/',
-                color: '#9b59b6'
-            },
-            {
-                name: '黒川温泉',
-                category: '温泉施設',
-                lat: 33.0347,
-                lng: 131.1169,
-                address: '熊本県阿蘇郡南小国町黒川温泉',
-                description: '冬の夜に鞠灯篭と筒灯篭でライトアップされる幻想的な温泉街。',
-                url: 'https://www.kurokawaonsen.or.jp/',
-                color: '#e67e22'
-            },
-            {
-                name: '高森田楽保存会',
-                category: '飲食・文化施設',
-                lat: 32.8228,
-                lng: 131.1294,
-                address: '熊本県阿蘇郡高森町大字上色見2639',
-                description: '茅葺き屋根の古民家で囲炉裏を囲みながら伝統的な田楽を味わえます。',
-                url: 'https://dengaku-hozonkai.com/',
-                color: '#9b59b6'
-            },
-            {
-                name: '崎津教会',
-                category: '歴史・文化施設',
-                lat: 32.2917,
-                lng: 130.0142,
-                address: '熊本県天草市河浦町崎津539',
-                description: '世界遺産「潜伏キリシタン関連遺産」の構成資産。海の天主堂とも呼ばれます。',
-                url: 'https://kumamoto.guide/spots/detail/917',
-                color: '#9b59b6'
-            },
-            {
-                name: '御船町恐竜博物館',
-                category: '博物館',
-                lat: 32.7086,
-                lng: 130.8061,
-                address: '熊本県上益城郡御船町大字御船995-6',
-                description: '日本で最初に肉食恐竜の化石が発見された御船町の恐竜専門博物館。',
-                url: 'https://mifunemuseum.jp/',
-                color: '#9b59b6'
-            },
-            {
-                name: '草千里ヶ浜',
-                category: '自然景観',
-                lat: 32.8842,
-                lng: 131.0236,
-                address: '熊本県阿蘇市永草2391-15',
-                description: '阿蘇五岳を一望できる広大な草原。放牧された馬が草を食む牧歌的な風景。',
-                url: 'https://www.newkusasenri.com/',
-                color: '#27ae60'
-            },
-            {
-                name: '阿蘇ミルク牧場',
-                category: '観光牧場',
-                lat: 32.8317,
-                lng: 130.9486,
-                address: '熊本県阿蘇郡西原村河原3944-1',
-                description: '動物とのふれあいや手作り体験が楽しめる観光牧場。新鮮な牛乳とソフトクリームが人気。',
-                url: 'https://aso-milk.jp/',
-                color: '#27ae60'
-            },
-            {
-                name: 'ミルクロード（大観峰）',
-                category: 'ドライブコース',
-                lat: 32.9544,
-                lng: 131.0894,
-                address: '熊本県阿蘇市',
-                description: '阿蘇外輪山の北側を走る全長約45kmの絶景ドライブルート。',
-                url: 'https://jafmate.jp/drive/driveroute_20231106.html',
-                color: '#3498db'
-            },
-            {
-                name: '天草市立御所浦恐竜の島博物館',
-                category: '博物館',
-                lat: 32.2797,
-                lng: 130.4139,
-                address: '熊本県天草市御所浦町御所浦4310-5',
-                description: '化石の島・御所浦の恐竜専門博物館。化石採集体験もできます。',
-                url: 'https://goshouramuseum.jp/',
-                color: '#9b59b6'
-            },
-            {
-                name: '海中水族館シードーナツ',
-                category: '水族館',
-                lat: 32.4506,
-                lng: 130.4339,
-                address: '熊本県上天草市松島町合津6225-8',
-                description: '西日本で唯一の海に浮かぶドーナツ型水族館。イルカとのふれあい体験も人気。',
-                url: 'https://amakusapearl.com/',
-                color: '#27ae60'
-            },
-            {
-                name: '道の駅 有明リップルランド',
-                category: '道の駅',
-                lat: 32.6697,
-                lng: 130.1531,
-                address: '熊本県天草市有明町上津浦1955',
-                description: '有明海に面した道の駅。島原半島や雲仙普賢岳を一望できる絶景スポット。',
-                url: 'https://kumamoto.guide/spots/detail/9027',
-                color: '#f39c12'
-            },
-            {
-                name: '山鹿灯籠民芸館',
-                category: '博物館',
-                lat: 33.0172,
-                lng: 130.6922,
-                address: '熊本県山鹿市山鹿1606-2',
-                description: '和紙と糊だけで作られる伝統工芸品「山鹿灯籠」を展示。国の重要文化財。',
-                url: 'https://yamaga.site/?page_id=1550',
-                color: '#9b59b6'
-            },
-            {
-                name: '肥後民家村',
-                category: '文化施設',
-                lat: 33.0208,
-                lng: 130.6217,
-                address: '熊本県玉名郡和水町江田302',
-                description: '県内各地から移築復元した古民家が点在。昔の日本の暮らしを体験できます。',
-                url: 'https://kumamoto.guide/spots/detail/12066',
-                color: '#9b59b6'
-            },
-            {
-                name: 'にしきひみつ基地ミュージアム',
-                category: '博物館',
-                lat: 32.2256,
-                lng: 130.7817,
-                address: '熊本県球磨郡錦町木上西2-107',
-                description: '旧人吉海軍航空基地の資料を展示。山の中に作られた海軍の施設跡を見学できます。',
-                url: 'https://132base.jp/',
-                color: '#9b59b6'
-            },
-            {
-                name: '釜田醸造所',
-                category: '工場見学',
-                lat: 32.2086,
-                lng: 130.7597,
-                address: '熊本県人吉市鍛冶屋町45',
-                description: '人吉の老舗味噌・醤油醸造所。伝統的な製法の製造工程を見学できます。',
-                url: 'http://www.marukama.co.jp/',
-                color: '#f39c12'
-            }
+            { name: 'グリーンランド', category: 'テーマパーク・遊園地', lat: 32.9864, lng: 130.4347, address: '熊本県荒尾市緑ケ丘', description: '西日本最大級の遊園地。約70種類以上のアトラクションがあります。', url: 'https://www.greenland.co.jp/park', color: '#e74c3c' },
+            { name: '阿蘇ファームランド', category: 'テーマパーク・遊園地', lat: 32.8494, lng: 131.0536, address: '熊本県阿蘇郡南阿蘇村河陽5579-3', description: '健康をテーマにした体験型テーマパーク。入園無料で動物とのふれあいも楽しめます。', url: 'https://asofarmland.co.jp/', color: '#e74c3c' },
+            { name: '熊本市動植物園', category: '動物園・自然体験', lat: 32.7527, lng: 130.7614, address: '熊本県熊本市東区健軍5-14-2', description: '約120種700頭の動物と800種50,000点の植物。キンシコウを日本で唯一見られます。', url: 'https://www.ezooko.jp/', color: '#27ae60' },
+            { name: 'ひごっこジャングル（坪井川緑地）', category: '公園・遊具施設', lat: 32.8278, lng: 130.6833, address: '熊本県熊本市北区清水町坪井川緑地内', description: '熊本市内最大級の大型複合遊具施設。150種類以上の遊具があり、無料で楽しめます。', url: 'https://www.city.kumamoto.jp/kiji00332062/', color: '#f39c12' },
+            { name: '阿蘇ネイチャーランド', category: 'アウトドア・アクティビティ', lat: 32.8856, lng: 131.1097, address: '熊本県阿蘇市内牧1092-1', description: 'パラグライダー、熱気球、マウンテンボードなどのアウトドア体験ができます。', url: 'https://asonatureland.com/', color: '#3498db' },
+            { name: '熊本城', category: '歴史・文化施設', lat: 32.8064, lng: 130.7056, address: '熊本県熊本市中央区本丸1-1', description: '日本三名城の一つ。ベビーカーでの入園も可能です。', url: 'https://castle.kumamoto-guide.jp/', color: '#9b59b6' },
+            { name: 'ONE PIECE ルフィ像（熊本県庁）', category: '歴史・文化施設', lat: 32.7897, lng: 130.7417, address: '熊本県熊本市中央区水前寺6-18-1', description: '熊本復興プロジェクトとして設置された麦わらの一味の像。県内9市町村に10体設置。', url: 'https://op-kumamoto.com/', color: '#9b59b6' },
+            { name: '黒川温泉', category: '温泉施設', lat: 33.0347, lng: 131.1169, address: '熊本県阿蘇郡南小国町黒川温泉', description: '冬の夜に鞠灯篭と筒灯篭でライトアップされる幻想的な温泉街。', url: 'https://www.kurokawaonsen.or.jp/', color: '#e67e22' },
+            { name: '高森田楽保存会', category: '飲食・文化施設', lat: 32.8228, lng: 131.1294, address: '熊本県阿蘇郡高森町大字上色見2639', description: '茅葺き屋根の古民家で囲炉裏を囲みながら伝統的な田楽を味わえます。', url: 'https://dengaku-hozonkai.com/', color: '#9b59b6' },
+            { name: '崎津教会', category: '歴史・文化施設', lat: 32.2917, lng: 130.0142, address: '熊本県天草市河浦町崎津539', description: '世界遺産「潜伏キリシタン関連遺産」の構成資産。海の天主堂とも呼ばれます。', url: 'https://kumamoto.guide/spots/detail/917', color: '#9b59b6' },
+            { name: '御船町恐竜博物館', category: '博物館', lat: 32.7086, lng: 130.8061, address: '熊本県上益城郡御船町大字御船995-6', description: '日本で最初に肉食恐竜の化石が発見された御船町の恐竜専門博物館。', url: 'https://mifunemuseum.jp/', color: '#9b59b6' },
+            { name: '草千里ヶ浜', category: '自然景観', lat: 32.8842, lng: 131.0236, address: '熊本県阿蘇市永草2391-15', description: '阿蘇五岳を一望できる広大な草原。放牧された馬が草を食む牧歌的な風景。', url: 'https://www.newkusasenri.com/', color: '#27ae60' },
+            { name: '阿蘇ミルク牧場', category: '観光牧場', lat: 32.8317, lng: 130.9486, address: '熊本県阿蘇郡西原村河原3944-1', description: '動物とのふれあいや手作り体験が楽しめる観光牧場。新鮮な牛乳とソフトクリームが人気。', url: 'https://aso-milk.jp/', color: '#27ae60' },
+            { name: 'ミルクロード（大観峰）', category: 'ドライブコース', lat: 32.9544, lng: 131.0894, address: '熊本県阿蘇市', description: '阿蘇外輪山の北側を走る全長約45kmの絶景ドライブルート。', url: 'https://jafmate.jp/drive/driveroute_20231106.html', color: '#3498db' },
+            { name: '天草市立御所浦恐竜の島博物館', category: '博物館', lat: 32.2797, lng: 130.4139, address: '熊本県天草市御所浦町御所浦4310-5', description: '化石の島・御所浦の恐竜専門博物館。化石採集体験もできます。', url: 'https://goshouramuseum.jp/', color: '#9b59b6' },
+            { name: '海中水族館シードーナツ', category: '水族館', lat: 32.4506, lng: 130.4339, address: '熊本県上天草市松島町合津6225-8', description: '西日本で唯一の海に浮かぶドーナツ型水族館。イルカとのふれあい体験も人気。', url: 'https://amakusapearl.com/', color: '#27ae60' },
+            { name: '道の駅 有明リップルランド', category: '道の駅', lat: 32.6697, lng: 130.1531, address: '熊本県天草市有明町上津浦1955', description: '有明海に面した道の駅。島原半島や雲仙普賢岳を一望できる絶景スポット。', url: 'https://kumamoto.guide/spots/detail/9027', color: '#f39c12' },
+            { name: '山鹿灯籠民芸館', category: '博物館', lat: 33.0172, lng: 130.6922, address: '熊本県山鹿市山鹿1606-2', description: '和紙と糊だけで作られる伝統工芸品「山鹿灯籠」を展示。国の重要文化財。', url: 'https://yamaga.site/?page_id=1550', color: '#9b59b6' },
+            { name: '肥後民家村', category: '文化施設', lat: 33.0208, lng: 130.6217, address: '熊本県玉名郡和水町江田302', description: '県内各地から移築復元した古民家が点在。昔の日本の暮らしを体験できます。', url: 'https://kumamoto.guide/spots/detail/12066', color: '#9b59b6' },
+            { name: 'にしきひみつ基地ミュージアム', category: '博物館', lat: 32.2256, lng: 130.7817, address: '熊本県球磨郡錦町木上西2-107', description: '旧人吉海軍航空基地の資料を展示。山の中に作られた海軍の施設跡を見学できます。', url: 'https://132base.jp/', color: '#9b59b6' },
+            { name: '釜田醸造所', category: '工場見学', lat: 32.2086, lng: 130.7597, address: '熊本県人吉市鍛冶屋町45', description: '人吉の老舗味噌・醤油醸造所。伝統的な製法の製造工程を見学できます。', url: 'http://www.marukama.co.jp/', color: '#f39c12' }
         ];
+
+        // LocalStorageからレーティングデータを読み込み
+        function loadRatings() {
+            const saved = localStorage.getItem('kumamoto-ratings');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        // LocalStorageにレーティングデータを保存
+        function saveRatings(ratings) {
+            localStorage.setItem('kumamoto-ratings', JSON.stringify(ratings));
+        }
+
+        // LocalStorageから除外データを読み込み
+        function loadExclusions() {
+            const saved = localStorage.getItem('kumamoto-exclusions');
+            return saved ? JSON.parse(saved) : {};
+        }
+
+        // LocalStorageに除外データを保存
+        function saveExclusions(exclusions) {
+            localStorage.setItem('kumamoto-exclusions', JSON.stringify(exclusions));
+        }
+
+        // レーティングを設定
+        function setRating(spotName, user, criterion, rating) {
+            const ratings = loadRatings();
+            if (!ratings[spotName]) ratings[spotName] = {};
+            if (!ratings[spotName][user]) ratings[spotName][user] = {};
+            ratings[spotName][user][criterion] = rating;
+            saveRatings(ratings);
+            updateRatingDisplay(spotName);
+        }
+
+        // レーティングを取得
+        function getRating(spotName, user, criterion) {
+            const ratings = loadRatings();
+            return ratings[spotName]?.[user]?.[criterion] || 0;
+        }
+
+        // 星の表示を更新
+        function updateStars(container, rating) {
+            const stars = container.querySelectorAll('.star');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                }
+            });
+        }
+
+        // レーティング表示を更新
+        function updateRatingDisplay(spotName) {
+            const ratings = loadRatings();
+            const displayDiv = document.querySelector(`[data-spot="${spotName}"] .rating-display`);
+            if (!displayDiv) return;
+
+            const spotRatings = ratings[spotName] || {};
+            let html = '<strong>現在のレーティング:</strong><br>';
+
+            ['matsushita', 'morita'].forEach(user => {
+                const userName = user === 'matsushita' ? '松下' : '森田';
+                const userRatings = spotRatings[user] || {};
+                const child = userRatings['child'] || 0;
+                const access = userRatings['access'] || 0;
+                const unique = userRatings['unique'] || 0;
+
+                if (child || access || unique) {
+                    html += `<div class="user-rating">
+                        <span class="user-name">${userName}:</span>
+                        子ども${child}★ / 行き${access}★ / ここ${unique}★
+                    </div>`;
+                }
+            });
+
+            displayDiv.innerHTML = html;
+        }
 
         // Google Maps初期化関数
         function initMap() {
-            // マップの作成（熊本県の中心付近）
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: 32.8, lng: 130.7 },
                 zoom: 10,
@@ -454,33 +379,31 @@
                 fullscreenControl: true
             });
 
-            // 境界を計算するためのLatLngBounds
             const bounds = new google.maps.LatLngBounds();
+            const exclusions = loadExclusions();
 
-            // 各スポットにマーカーを追加
             spots.forEach((spot, index) => {
                 const position = { lat: spot.lat, lng: spot.lng };
+                const isExcluded = exclusions[spot.name] || false;
 
-                // カスタムマーカーアイコン（SVG）
                 const markerIcon = {
                     path: google.maps.SymbolPath.CIRCLE,
                     fillColor: spot.color,
-                    fillOpacity: 1,
+                    fillOpacity: isExcluded ? 0.3 : 1,
                     strokeColor: '#ffffff',
                     strokeWeight: 3,
                     scale: 12
                 };
 
-                // マーカーの作成
                 const marker = new google.maps.Marker({
                     position: position,
                     map: map,
                     title: spot.name,
                     icon: markerIcon,
-                    animation: google.maps.Animation.DROP
+                    animation: google.maps.Animation.DROP,
+                    visible: !isExcluded
                 });
 
-                // 情報ウィンドウの内容
                 const infoWindowContent = `
                     <div class="info-window">
                         <div class="info-window-title">${spot.name}</div>
@@ -491,16 +414,12 @@
                     </div>
                 `;
 
-                // 情報ウィンドウの作成
                 const infoWindow = new google.maps.InfoWindow({
                     content: infoWindowContent
                 });
 
-                // マーカークリックイベント
                 marker.addListener('click', () => {
-                    // 他の情報ウィンドウを閉じる
                     infoWindows.forEach(iw => iw.close());
-                    // この情報ウィンドウを開く
                     infoWindow.open(map, marker);
                 });
 
@@ -509,72 +428,146 @@
                 bounds.extend(position);
             });
 
-            // すべてのマーカーが表示されるようにマップを調整
             map.fitBounds(bounds);
-
-            // スポットカードの作成
             createSpotCards();
         }
 
-        // スポットカードを作成する関数
+        // スポットカードを作成
         function createSpotCards() {
             const spotListDiv = document.getElementById('spotList');
+            const exclusions = loadExclusions();
 
             spots.forEach((spot, index) => {
+                const isExcluded = exclusions[spot.name] || false;
                 const card = document.createElement('div');
-                card.className = 'spot-card';
+                card.className = 'spot-card' + (isExcluded ? ' excluded' : '');
+                card.setAttribute('data-spot', spot.name);
+
                 card.innerHTML = `
                     <div class="category" style="background-color: ${spot.color};">${spot.category}</div>
                     <h3>${spot.name}</h3>
                     <p style="font-size: 14px; margin: 10px 0;">${spot.description}</p>
                     <div class="address">📍 ${spot.address}</div>
+
+                    <div class="exclude-checkbox">
+                        <label>
+                            <input type="checkbox" class="exclude-cb" data-spot="${spot.name}" ${isExcluded ? 'checked' : ''}>
+                            除外する
+                        </label>
+                    </div>
+
+                    <button class="goto-map-btn" data-index="${index}">マップで表示</button>
+
+                    <div class="rating-section">
+                        <strong>レーティング (現在: <span class="current-user-name">松下</span>)</strong>
+                        <div class="rating-item">
+                            <span class="rating-label">子ども喜び度</span>
+                            <div class="stars" data-spot="${spot.name}" data-criterion="child">
+                                ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="rating-item">
+                            <span class="rating-label">行きやすさ</span>
+                            <div class="stars" data-spot="${spot.name}" data-criterion="access">
+                                ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="rating-item">
+                            <span class="rating-label">ここならでは</span>
+                            <div class="stars" data-spot="${spot.name}" data-criterion="unique">
+                                ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">★</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="rating-display"></div>
+                    </div>
                 `;
 
-                // カードクリックでマーカーに移動
-                card.addEventListener('click', () => {
+                // 除外チェックボックスのイベントリスナー
+                const excludeCheckbox = card.querySelector('.exclude-cb');
+                excludeCheckbox.addEventListener('change', (e) => {
+                    const exclusions = loadExclusions();
+                    exclusions[spot.name] = e.target.checked;
+                    saveExclusions(exclusions);
+
+                    // カードの表示を更新
+                    card.classList.toggle('excluded', e.target.checked);
+
+                    // マーカーの表示を更新
+                    markers[index].setVisible(!e.target.checked);
+                    markers[index].setIcon({
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: spot.color,
+                        fillOpacity: e.target.checked ? 0.3 : 1,
+                        strokeColor: '#ffffff',
+                        strokeWeight: 3,
+                        scale: 12
+                    });
+                });
+
+                // マップ表示ボタン
+                const gotoBtn = card.querySelector('.goto-map-btn');
+                gotoBtn.addEventListener('click', () => {
                     const position = { lat: spot.lat, lng: spot.lng };
                     map.setCenter(position);
                     map.setZoom(14);
-
-                    // 対応するマーカーの情報ウィンドウを開く
                     infoWindows.forEach(iw => iw.close());
                     infoWindows[index].open(map, markers[index]);
-
-                    // ページ上部にスクロール
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
 
+                // 星のクリックイベント
+                card.querySelectorAll('.stars').forEach(starsContainer => {
+                    const spotName = starsContainer.dataset.spot;
+                    const criterion = starsContainer.dataset.criterion;
+
+                    // 初期表示
+                    const currentRating = getRating(spotName, currentUser, criterion);
+                    updateStars(starsContainer, currentRating);
+
+                    starsContainer.querySelectorAll('.star').forEach(star => {
+                        star.addEventListener('click', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            setRating(spotName, currentUser, criterion, rating);
+                            updateStars(starsContainer, rating);
+                        });
+                    });
+                });
+
+                updateRatingDisplay(spot.name);
                 spotListDiv.appendChild(card);
             });
         }
 
+        // ユーザー選択の変更
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('input[name="user"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    currentUser = e.target.value;
+                    const userName = currentUser === 'matsushita' ? '松下' : '森田';
+
+                    // 現在のユーザー名を更新
+                    document.querySelectorAll('.current-user-name').forEach(el => {
+                        el.textContent = userName;
+                    });
+
+                    // 全ての星の表示を更新
+                    document.querySelectorAll('.stars').forEach(starsContainer => {
+                        const spotName = starsContainer.dataset.spot;
+                        const criterion = starsContainer.dataset.criterion;
+                        const rating = getRating(spotName, currentUser, criterion);
+                        updateStars(starsContainer, rating);
+                    });
+                });
+            });
+        });
+
         // エラーハンドリング
         window.gm_authFailure = function() {
-            document.getElementById('api-notice').style.display = 'block';
-            console.error('Google Maps APIキーが無効です。APIキーを確認してください。');
+            console.error('Google Maps APIキーが無効です。');
         };
     </script>
 
-    <!--
-        Google Maps API読み込み
-
-        【重要】下記のYOUR_API_KEY_HEREを実際のAPIキーに置き換えてください
-
-        APIキーの取得方法：
-        1. https://console.cloud.google.com/ にアクセス
-        2. プロジェクトを作成または選択
-        3. 「APIとサービス」→「ライブラリ」から「Maps JavaScript API」を有効化
-        4. 「APIとサービス」→「認証情報」からAPIキーを作成
-        5. 作成したAPIキーを下記のYOUR_API_KEY_HEREと置き換え
-
-        開発中はAPIキーなしでも一部機能が動作しますが、
-        「開発目的のみ」の透かしが表示されます。
-    -->
-    <!-- APIキーあり版（APIキーを取得した場合はこちらを使用）
-    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMap&language=ja" async defer></script>
-    -->
-
-    <!-- APIキーなし版（開発・テスト用） -->
+    <!-- Google Maps API読み込み -->
     <script src="https://maps.googleapis.com/maps/api/js?callback=initMap&language=ja" async defer></script>
 </body>
 </html>
