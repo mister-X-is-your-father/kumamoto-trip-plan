@@ -943,6 +943,12 @@
                 spotListDiv.appendChild(card);
                 updateRatingDisplay(spot.name);
             });
+
+            // 全てのカードが作成された後に、現在のユーザー名を表示
+            const userName = currentUser === 'matsushita' ? '松下' : '森田';
+            document.querySelectorAll('.current-user-name').forEach(el => {
+                el.textContent = userName;
+            });
         }
 
         // ローカルストレージにユーザー選択を保存
