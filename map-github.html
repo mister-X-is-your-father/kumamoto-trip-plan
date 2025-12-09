@@ -803,8 +803,16 @@
                     starsContainer.querySelectorAll('.star').forEach(star => {
                         star.addEventListener('click', async () => {
                             const rating = parseInt(star.dataset.rating);
-                            await setRating(spotName, currentUser, criterion, rating);
-                            updateStars(starsContainer, rating);
+                            const currentRating = getRating(spotName, currentUser, criterion);
+
+                            // 同じレーティングをクリックした場合はクリア（0にする）
+                            if (currentRating === rating) {
+                                await setRating(spotName, currentUser, criterion, 0);
+                                updateStars(starsContainer, 0);
+                            } else {
+                                await setRating(spotName, currentUser, criterion, rating);
+                                updateStars(starsContainer, rating);
+                            }
                         });
                     });
                 });
