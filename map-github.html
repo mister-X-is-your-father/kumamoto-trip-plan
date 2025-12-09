@@ -271,12 +271,8 @@
             display: none !important;
         }
 
-        /* ダイアログとモーダルを非表示 */
+        /* ダイアログの閉じるボタンを非表示（InfoWindow自体は表示） */
         .gm-style-iw + div {
-            display: none !important;
-        }
-
-        div[role="dialog"] {
             display: none !important;
         }
 
@@ -707,8 +703,8 @@
                     path: google.maps.SymbolPath.CIRCLE,
                     fillColor: spot.color,
                     fillOpacity: isExcluded ? 0.3 : 1,
-                    strokeColor: '#ffffff',
-                    strokeWeight: 3,
+                    strokeColor: spot.color,
+                    strokeWeight: 0,
                     scale: 12
                 };
 
@@ -825,8 +821,8 @@
                         path: google.maps.SymbolPath.CIRCLE,
                         fillColor: spot.color,
                         fillOpacity: e.target.checked ? 0.3 : 1,
-                        strokeColor: '#ffffff',
-                        strokeWeight: 3,
+                        strokeColor: spot.color,
+                        strokeWeight: 0,
                         scale: 12
                     });
                 });
@@ -927,20 +923,19 @@
         // Google Mapsのエラーダイアログを削除する関数
         function removeGoogleMapsErrors() {
             // OKボタンを探して自動的にクリック
-            const okButtons = document.querySelectorAll('button[aria-label="OK"], button.dismissButton, [role="dialog"] button');
+            const okButtons = document.querySelectorAll('button[aria-label="OK"], button.dismissButton');
             okButtons.forEach(button => {
                 if (button.textContent.includes('OK') || button.textContent.includes('閉じる')) {
                     button.click();
                 }
             });
 
-            // エラー関連の要素を全て削除
+            // エラー関連の要素を全て削除（InfoWindowは除外）
             const errorSelectors = [
                 '.gm-err-container',
                 '.gm-err-content',
                 '.gm-err-message',
                 '.gm-err-autocomplete',
-                '[role="dialog"]',
                 '.dismissButton'
             ];
 
@@ -948,6 +943,16 @@
                 document.querySelectorAll(selector).forEach(el => {
                     el.remove();
                 });
+            });
+
+            // エラーダイアログのみを削除（InfoWindowは除外）
+            document.querySelectorAll('[role="dialog"]').forEach(el => {
+                // エラーメッセージを含むダイアログのみ削除
+                // InfoWindowには.gm-style-iwクラスが含まれるので除外
+                if (!el.querySelector('.gm-style-iw') &&
+                    (el.textContent.includes('API') || el.textContent.includes('エラー') || el.classList.contains('gm-err'))) {
+                    el.remove();
+                }
             });
         }
 
