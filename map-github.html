@@ -324,6 +324,23 @@
             margin: 8px 0;
         }
 
+        .info-window-exclude {
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .info-window-exclude label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .info-window-exclude input[type="checkbox"] {
+            cursor: pointer;
+        }
+
         .info-window-link {
             display: inline-block;
             margin-top: 8px;
@@ -729,12 +746,55 @@
                         <div class="info-window-category" style="background-color: ${spot.color};">${spot.category}</div>
                         <div class="info-window-description">${spot.description}</div>
                         <div class="info-window-address">📍 ${spot.address}</div>
+                        <div class="info-window-exclude">
+                            <label style="cursor: pointer; font-size: 13px;">
+                                <input type="checkbox" class="info-exclude-cb" data-spot="${spot.name}" data-index="${index}" ${isExcluded ? 'checked' : ''}>
+                                除外する
+                            </label>
+                        </div>
                         <a href="${spot.url}" target="_blank" class="info-window-link">公式サイトを見る →</a>
                     </div>
                 `;
 
                 const infoWindow = new google.maps.InfoWindow({
                     content: infoWindowContent
+                });
+
+                // InfoWindowが開かれたときのイベントリスナー
+                google.maps.event.addListener(infoWindow, 'domready', function() {
+                    const checkbox = document.querySelector('.info-exclude-cb[data-spot="' + spot.name + '"]');
+                    if (checkbox) {
+                        checkbox.addEventListener('change', async function(e) {
+                            const spotIndex = parseInt(e.target.dataset.index);
+                            const exclusions = { ...exclusionsCache };
+                            exclusions[spot.name] = e.target.checked;
+                            await saveExclusionsToGitHub(exclusions);
+
+                            // カードの表示を更新
+                            const card = document.querySelector('.spot-card[data-spot="' + spot.name + '"]');
+                            if (card) {
+                                card.classList.toggle('excluded', e.target.checked);
+                                const cardCheckbox = card.querySelector('.exclude-cb');
+                                if (cardCheckbox) {
+                                    cardCheckbox.checked = e.target.checked;
+                                }
+                            }
+
+                            // マーカーの表示を更新
+                            markers[spotIndex].setVisible(!e.target.checked);
+                            markers[spotIndex].setIcon({
+                                path: google.maps.SymbolPath.CIRCLE,
+                                fillColor: spot.color,
+                                fillOpacity: e.target.checked ? 0.3 : 1,
+                                strokeColor: spot.color,
+                                strokeWeight: 0,
+                                scale: 12
+                            });
+
+                            // InfoWindowを閉じる
+                            infoWindow.close();
+                        });
+                    }
                 });
 
                 marker.addListener('click', () => {
