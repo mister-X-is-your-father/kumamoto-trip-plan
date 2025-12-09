@@ -458,7 +458,7 @@
         let map;
         let markers = [];
         let infoWindows = [];
-        let currentUser = 'matsushita';
+        let currentUser = localStorage.getItem('kumamoto-current-user') || 'matsushita';
         let ratingsCache = {};
         let exclusionsCache = {};
 
@@ -945,11 +945,30 @@
             });
         }
 
+        // ローカルストレージにユーザー選択を保存
+        function saveUserSelection(user) {
+            localStorage.setItem('kumamoto-current-user', user);
+        }
+
         // ユーザー選択の変更
         document.addEventListener('DOMContentLoaded', () => {
+            // 保存されたユーザー選択を読み込んで、ラジオボタンを更新
+            const savedUser = localStorage.getItem('kumamoto-current-user') || 'matsushita';
+            const radioButton = document.querySelector(`input[name="user"][value="${savedUser}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+
+            // 現在のユーザー名を表示
+            const userName = currentUser === 'matsushita' ? '松下' : '森田';
+            document.querySelectorAll('.current-user-name').forEach(el => {
+                el.textContent = userName;
+            });
+
             document.querySelectorAll('input[name="user"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     currentUser = e.target.value;
+                    saveUserSelection(currentUser); // ローカルストレージに保存
                     const userName = currentUser === 'matsushita' ? '松下' : '森田';
 
                     // 現在のユーザー名を更新
